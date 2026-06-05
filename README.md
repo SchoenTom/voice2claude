@@ -5,9 +5,12 @@
 **Dein iPhone als Diktiergerät _und Fernbedienung_ für [Claude Code](https://claude.com/claude-code).**
 Sprich ins Handy → der Text wird **lokal** transkribiert (faster-whisper, kein
 Cloud-Upload) → landet im Prompt deiner laufenden `claude`-Session. Plus ein
-Fernbedienungs-Panel: Claude vom Sofa aus bestätigen, stoppen, weiterschicken.
+Fernbedienungs-Panel: Claude vom Sofa aus bestätigen, stoppen, weiterschicken,
+**Bilder einfügen** und auf einen Blick sehen, **welcher Agent gerade auf dich wartet**.
 
-> 🇬🇧 _Turn your iPhone into a local dictation device **and** remote control for Claude Code. Speech is transcribed on-device with faster-whisper — audio never leaves your Mac. macOS + Apple Silicon._
+<p align="center">
+  <img src="docs/screenshot.png" width="300" alt="voice2claude — Aurora UI: Mic-Orb, Sessions mit Status, Fernbedienung">
+</p>
 
 ### Pipeline
 
@@ -30,11 +33,13 @@ läuft über den stabilen Bonjour-Namen `<dein-mac>.local` — **keine IP-Adress
 mehr eintippen**, auch wenn sich das Netz ändert.
 
 - 🔒 **Lokal & privat** — Audio verlässt deinen Mac nie. Keine Accounts, keine Cloud.
+- 🗣 **Diktat** — sprechen → lokal transkribiert (faster-whisper) → in den Prompt. **DE / EN / Auto** umschaltbar.
+- 🏰 **Kontrollturm** — pro Session ein Status (**arbeitet / bereit / aktiv**) — sieh sofort, welcher Agent auf dich wartet.
+- 🔀 **Session-Wechsel** — alle Claude-Fenster (auch über Spaces) als Liste, antippen wechselt.
+- 🎛 **Fernbedienung** — Enter / Esc / ⌃C / Pfeile / Ziffern + App-/Fenster-Navigation vom Handy.
+- 🖼 **Bilder** — Foto/Screenshot vom Handy → erscheint inline in Claudes Prompt.
 - ▶️ **Start-Button** — Menüleisten-App (🎙️), kein Terminal-Befehl nötig.
-- 🎛 **Fernbedienung** — Enter / Esc / ⌃C / Pfeile / Ziffern / Schnell-Prompts vom Handy.
-- 👁 **Live-Review** — sieh den erkannten Text, bevor er gesendet wird.
 - 🛡 **Safety-Guard** — tippt nur in Terminals; sonst nur Zwischenablage.
-- ♿️ **Geführte Einrichtung** — `doctor` prüft alles, inkl. Bedienungshilfen.
 
 ---
 
