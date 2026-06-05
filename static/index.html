@@ -333,13 +333,20 @@ function clock(){ const d=new Date(); $('#clock').textContent=String(d.getHours(
 clock(); setInterval(clock, 15000);
 
 /* ---- Status ---- */
+function cleanTitle(t){
+  if(!t) return '';
+  const parts=t.split(' — ');
+  let s=(parts.length>1?parts[1]:t).trim();
+  try{ while(s && !/[\p{L}\p{N}]/u.test(s[0])) s=s.slice(1); }catch(e){}
+  return s.trim()||t;
+}
 async function poll(){
   try{
     const j = await (await api('/status')).json();
     const acc=j.accessibility, term=j.is_terminal, app=j.frontmost?.app||'?', title=j.frontmost?.title;
     if(j.backend==='tmux'){ dot.className='status-dot'; tname.textContent='tmux: '+j.tmux; }
     else if(!acc){ dot.className='status-dot bad'; tname.textContent='Bedienungshilfen aus'; }
-    else if(term){ dot.className='status-dot'; tname.textContent=title||app; }
+    else if(term){ dot.className='status-dot'; tname.textContent=cleanTitle(title)||app; }
     else { dot.className='status-dot warn'; tname.textContent=app+' (kein Terminal)'; }
   }catch(e){ dot.className='status-dot bad'; tname.textContent='Mac nicht erreichbar'; }
 }
