@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+cert.pem
+key.pem
+.DS_Store
+.idea/
+*.iml
+icon.icns
+*.iconset/
+voice2claude.app/
+concepts/
