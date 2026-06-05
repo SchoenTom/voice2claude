@@ -45,25 +45,29 @@ body::after{ content:''; position:fixed; inset:0; z-index:0; pointer-events:none
   padding:0 0 calc(env(safe-area-inset-bottom,0px) + 36px); padding-top:env(safe-area-inset-top,0px);
   display:flex; flex-direction:column; gap:14px; }
 
-.header{ position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between;
-  padding:14px 18px 12px; gap:10px;
-  background:linear-gradient(180deg, rgba(5,8,16,0.94) 0%, rgba(5,8,16,0.6) 72%, transparent 100%);
-  backdrop-filter:blur(18px) saturate(1.4); -webkit-backdrop-filter:blur(18px) saturate(1.4); }
-.target-arrow{ color:var(--text-muted); font-size:10px; flex:none; opacity:.8; }
-.brand-name{ font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:lowercase; color:var(--text-secondary); flex:none; }
+.header{ position:sticky; top:0; z-index:50; display:flex; flex-direction:column; gap:9px;
+  padding:13px 16px 11px;
+  background:linear-gradient(180deg, rgba(5,8,16,0.96) 0%, rgba(5,8,16,0.72) 64%, transparent 100%);
+  backdrop-filter:blur(20px) saturate(1.5); -webkit-backdrop-filter:blur(20px) saturate(1.5); }
+.hrow1{ display:flex; align-items:center; justify-content:space-between; padding:0 2px; }
+.brand-name{ font-size:14px; font-weight:600; letter-spacing:.08em; text-transform:lowercase; color:var(--text-secondary); }
 .brand-name span{ color:var(--glow-teal); text-shadow:0 0 12px rgba(0,198,255,0.7); }
-.session-pill{ display:flex; align-items:center; gap:7px; min-width:0;
-  background:rgba(0,198,255,0.08); border:1px solid rgba(0,198,255,0.18); border-radius:100px;
-  padding:5px 12px 5px 9px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
-.status-dot{ width:7px; height:7px; border-radius:50%; background:var(--glow-teal); flex-shrink:0;
+.time-display{ font-size:11.5px; color:var(--text-muted); font-variant-numeric:tabular-nums; letter-spacing:.04em; }
+/* Ziel-Balken — wohin geht der Befehl */
+.target-bar{ display:flex; align-items:center; gap:9px; min-width:0; padding:9px 12px; border-radius:14px;
+  background:linear-gradient(90deg, rgba(0,198,255,0.11), rgba(0,198,255,0.025) 80%);
+  border:1px solid rgba(0,198,255,0.22);
+  box-shadow:0 0 20px rgba(0,198,255,0.07), inset 0 1px 0 rgba(255,255,255,0.05); }
+.status-dot{ width:8px; height:8px; border-radius:50%; background:var(--glow-teal); flex:none;
   box-shadow:0 0 8px var(--glow-teal), 0 0 16px rgba(0,198,255,0.5);
   animation:pulse-dot 2.4s ease-in-out infinite; transition:background .3s, box-shadow .3s; }
-.status-dot.warn{ background:var(--glow-warm,#f59e0b); box-shadow:0 0 8px #f59e0b; }
+.status-dot.warn{ background:#f59e0b; box-shadow:0 0 8px #f59e0b; }
 .status-dot.bad{ background:var(--glow-red); box-shadow:0 0 8px var(--glow-red); }
-@keyframes pulse-dot{ 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.65;transform:scale(.85)} }
-.session-name{ font-size:11.5px; font-weight:500; color:var(--text-accent); white-space:nowrap;
-  min-width:0; overflow:hidden; text-overflow:ellipsis; }
-.time-display{ font-size:11px; color:var(--text-muted); font-variant-numeric:tabular-nums; flex:none; }
+@keyframes pulse-dot{ 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.82)} }
+.target-label{ font-size:9px; font-weight:700; letter-spacing:.16em; color:var(--glow-teal); flex:none;
+  background:rgba(0,198,255,0.14); padding:3px 7px; border-radius:6px; }
+.session-name{ font-size:13.5px; font-weight:500; color:var(--text-accent); white-space:nowrap;
+  min-width:0; overflow:hidden; text-overflow:ellipsis; flex:1; }
 
 .section-label{ font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
   color:var(--text-muted); padding:0 20px; margin-bottom:-6px; display:flex; justify-content:space-between; }
@@ -115,6 +119,12 @@ body::after{ content:''; position:fixed; inset:0; z-index:0; pointer-events:none
 .mic-label{ font-size:13.5px; font-weight:500; color:var(--text-secondary); letter-spacing:.03em; }
 .mic-label b{ color:var(--text-primary); font-weight:600; }
 .mic-sublabel{ font-size:10.5px; color:var(--text-muted); letter-spacing:.04em; }
+.mic-controls{ display:flex; align-items:center; gap:10px; margin-top:4px; }
+.seg{ display:flex; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); border-radius:10px; overflow:hidden; }
+.seg button{ border:0; background:transparent; color:var(--text-muted); font-size:11.5px; font-weight:600; padding:7px 12px; -webkit-appearance:none; transition:background .15s, color .15s; }
+.seg button.on{ background:rgba(0,198,255,0.18); color:var(--glow-teal); }
+.imgbtn{ border:1px solid rgba(0,198,255,0.22); background:rgba(0,198,255,0.08); color:var(--glow-teal); border-radius:10px; font-size:12.5px; font-weight:600; padding:7px 14px; -webkit-appearance:none; transition:transform .1s; }
+.imgbtn:active{ transform:scale(.95); }
 
 .transcript-zone,.sessions-zone,.keypad-zone,.nav-zone{ padding:0 20px; }
 .transcript-card{ background:linear-gradient(145deg, rgba(17,24,39,0.85), rgba(11,15,28,0.9)); border:1px solid var(--border-subtle);
@@ -197,13 +207,15 @@ body::after{ content:''; position:fixed; inset:0; z-index:0; pointer-events:none
 <div class="app">
 
   <div class="header">
-    <div class="brand-name">voice<span>2claude</span></div>
-    <div class="session-pill">
-      <div class="status-dot" id="dot"></div>
-      <span class="target-arrow">▸</span>
-      <div class="session-name" id="tname">verbinde…</div>
+    <div class="hrow1">
+      <div class="brand-name">voice<span>2claude</span></div>
+      <div class="time-display" id="clock">––:––</div>
     </div>
-    <div class="time-display" id="clock">––:––</div>
+    <div class="target-bar">
+      <span class="status-dot" id="dot"></span>
+      <span class="target-label">ZIEL</span>
+      <span class="session-name" id="tname">verbinde…</span>
+    </div>
   </div>
 
   <div class="mic-zone">
@@ -229,6 +241,15 @@ body::after{ content:''; position:fixed; inset:0; z-index:0; pointer-events:none
       <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
         <div class="mic-label" id="miclabel"><b>Tippen</b> zum Sprechen</div>
         <div class="mic-sublabel">Diktat bleibt lokal auf deinem Mac</div>
+      </div>
+      <div class="mic-controls">
+        <div class="seg" id="langseg">
+          <button data-lang="de">DE</button>
+          <button data-lang="en">EN</button>
+          <button data-lang="auto">Auto</button>
+        </div>
+        <button class="imgbtn" id="imgbtn">📷&nbsp;Bild</button>
+        <input type="file" accept="image/*" id="imgin" hidden>
       </div>
     </div>
   </div>
@@ -427,7 +448,7 @@ async function upload(){
   const ext = mime.includes('mp4')||mime.includes('aac')?'m4a':(mime.includes('ogg')?'ogg':'webm');
   const fd=new FormData(); fd.append('audio',blob,'clip.'+ext);
   try{
-    const j=await (await api('/transcribe?inject='+(directMode?'1':'0'),{method:'POST',body:fd})).json();
+    const j=await (await api('/transcribe?inject='+(directMode?'1':'0')+'&lang='+currentLang,{method:'POST',body:fd})).json();
     if(j.empty){ toast('nichts gehört — nochmal'); }
     else if(directMode){ toast(j.sent?'✓ gesendet':(j.backend==='clipboard_fallback'?'⧉ Zwischenablage (kein Terminal vorne)':'nicht gesendet'), !j.sent); }
     else { ta.value = ta.value.trim() ? (ta.value.trim()+' '+j.text) : j.text; toast('+ ergänzt'); }
@@ -462,6 +483,28 @@ document.querySelectorAll('[data-act]').forEach(b=>{
   b.addEventListener('click', ()=>{ flashEl(b); cycleWindow(b.dataset.act); });
 });
 $('#refresh').onclick=loadSessions;
+
+/* ---- Sprache (DE/EN/Auto) ---- */
+let currentLang = localStorage.getItem('v2c_lang') || 'de';
+document.querySelectorAll('#langseg button').forEach(b=>{
+  b.classList.toggle('on', b.dataset.lang===currentLang);
+  b.onclick=()=>{ currentLang=b.dataset.lang; localStorage.setItem('v2c_lang',currentLang);
+    document.querySelectorAll('#langseg button').forEach(x=>x.classList.toggle('on', x===b)); };
+});
+
+/* ---- Bild senden (Foto -> Zwischenablage -> in Claudes Prompt) ---- */
+const imgin=$('#imgin');
+$('#imgbtn').onclick=()=>imgin.click();
+imgin.onchange=async ()=>{
+  if(!imgin.files || !imgin.files[0]) return;
+  const fd=new FormData(); fd.append('image', imgin.files[0]);
+  toast('Bild wird gesendet …');
+  try{
+    const j=await (await api('/image',{method:'POST',body:fd})).json();
+    toast(j.sent?'✓ Bild in den Prompt eingefügt':(j.error||'nicht gesendet'), !j.sent);
+  }catch(e){ toast('Fehler: '+e.message, true); }
+  imgin.value='';
+};
 
 poll(); loadSessions(); setInterval(poll, 3000); setInterval(loadSessions, 3500);
 </script>

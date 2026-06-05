@@ -156,46 +156,55 @@ def qr_page():
     except Exception as e:
         svg = f"<p>QR nicht verfügbar: {e}</p>"
     html = f"""<!doctype html><html lang=de><head><meta charset=utf-8>
-<meta name=viewport content="width=device-width, initial-scale=1">
+<meta name=viewport content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050810">
 <title>voice2claude — verbinden</title>
 <style>
-  :root{{ --bg:#0c0e12; --bg2:#0f1318; --ink:#ECEEF2; --dim:#8A8F98; --faint:#5b616c;
-    --glass:rgba(255,255,255,.045); --line:rgba(255,255,255,.09); --iris:#7C8CF8; --green:#5BD6A0;
-    --serif:ui-serif,"New York",Georgia,serif; --sans:-apple-system,system-ui,sans-serif; }}
-  *{{ box-sizing:border-box; margin:0; }}
-  body{{ min-height:100dvh; color:var(--ink); font-family:var(--sans);
-    background:radial-gradient(120% 60% at 50% -8%, rgba(124,140,248,.12), transparent 60%),
-      linear-gradient(180deg,var(--bg2),var(--bg) 32%); background-attachment:fixed;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; padding:32px; }}
-  body::after{{ content:""; position:fixed; inset:0; pointer-events:none; opacity:.03;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }}
-  .reveal{{ opacity:0; transform:translateY(12px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; }}
+  :root{{ --void:#050810; --ink:#f0f4ff; --dim:#8ba4c8; --faint:#4a6080; --teal:#00c6ff; }}
+  *{{ box-sizing:border-box; margin:0; -webkit-tap-highlight-color:transparent; }}
+  body{{ min-height:100dvh; color:var(--ink); font-family:-apple-system,system-ui,sans-serif;
+    background:var(--void); overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:30px; padding:32px; }}
+  body::before{{ content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(13,74,110,.55), transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 0%, rgba(168,85,247,.30), transparent 50%),
+      radial-gradient(ellipse 100% 40% at 50% 100%, rgba(26,10,62,.70), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 10% 80%, rgba(16,217,142,.15), transparent 50%);
+    animation:shift 18s ease-in-out infinite alternate; }}
+  @keyframes shift{{ 0%{{transform:scale(1) translate(0,0)}} 50%{{transform:scale(1.05) translate(10px,-8px)}} 100%{{transform:scale(1.02) translate(-6px,8px)}} }}
+  .reveal{{ position:relative; z-index:1; opacity:0; transform:translateY(14px); animation:rise .8s cubic-bezier(.2,.7,.2,1) forwards; }}
   @keyframes rise{{ to{{ opacity:1; transform:none; }} }}
-  .brand{{ font-family:var(--serif); font-size:30px; font-weight:600; letter-spacing:.3px; }}
-  .brand .v{{ color:var(--iris); }}
-  .tag{{ font-family:var(--serif); font-style:italic; font-size:16px; color:var(--dim); margin-top:6px; }}
-  .card{{ background:var(--glass); border:1px solid var(--line); border-radius:30px; padding:26px;
-    backdrop-filter:blur(22px); box-shadow:0 30px 80px rgba(0,0,0,.45); }}
-  .qframe{{ background:#fff; border-radius:20px; padding:18px; box-shadow:0 0 0 8px rgba(124,140,248,.10);
-    display:grid; place-items:center; }}
-  .qframe svg{{ width:min(62vw,290px); height:min(62vw,290px); display:block; }}
-  .scan{{ display:flex; align-items:center; gap:9px; justify-content:center; margin-top:18px; color:var(--ink); font-size:15px; font-weight:600; }}
-  .scan .pulse{{ width:9px; height:9px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green); animation:bl 1.6s infinite; }}
-  @keyframes bl{{ 50%{{ opacity:.3; }} }}
-  .url{{ font-size:13px; color:var(--iris); word-break:break-all; text-align:center; max-width:320px; }}
-  .foot{{ font-size:12px; color:var(--faint); display:flex; gap:14px; }}
-  .foot b{{ color:var(--dim); font-weight:600; }}
+  .brand{{ text-align:center; font-size:14px; font-weight:600; letter-spacing:.1em; text-transform:lowercase; color:var(--dim); }}
+  .brand .v{{ color:var(--teal); text-shadow:0 0 16px rgba(0,198,255,.8); }}
+  .tag{{ text-align:center; font-size:24px; font-weight:600; letter-spacing:.2px; margin-top:8px;
+    background:linear-gradient(90deg,#fff,#bfe9ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
+  .qwrap{{ position:relative; z-index:1; opacity:0; transform:translateY(14px); animation:rise .8s cubic-bezier(.2,.7,.2,1) .1s forwards; }}
+  .glowring{{ position:absolute; inset:-14px; border-radius:36px; background:transparent;
+    box-shadow:0 0 0 1px rgba(0,198,255,.25), 0 0 50px rgba(0,198,255,.30), 0 0 110px rgba(0,144,200,.18);
+    animation:breathe 3.4s ease-in-out infinite; }}
+  @keyframes breathe{{ 0%,100%{{ box-shadow:0 0 0 1px rgba(0,198,255,.2), 0 0 40px rgba(0,198,255,.22), 0 0 90px rgba(0,144,200,.12); }}
+    50%{{ box-shadow:0 0 0 1px rgba(0,198,255,.4), 0 0 70px rgba(0,198,255,.45), 0 0 140px rgba(0,144,200,.25); }} }}
+  .qframe{{ position:relative; background:#fff; border-radius:26px; padding:20px; display:grid; place-items:center; }}
+  .qframe svg{{ width:min(64vw,300px); height:min(64vw,300px); display:block; }}
+  .scan{{ display:flex; align-items:center; gap:10px; justify-content:center; margin-top:22px; color:var(--ink); font-size:15px; font-weight:600; }}
+  .scan .pulse{{ width:9px; height:9px; border-radius:50%; background:var(--teal); box-shadow:0 0 12px var(--teal); animation:bl 1.6s infinite; }}
+  @keyframes bl{{ 50%{{ opacity:.3; transform:scale(.8); }} }}
+  .url{{ font-size:13px; color:var(--teal); word-break:break-all; text-align:center; max-width:320px; opacity:.85; }}
+  .foot{{ font-size:12px; color:var(--faint); display:flex; gap:16px; align-items:center; }}
+  .foot b{{ color:var(--dim); font-weight:600; }} .foot .d{{ width:3px; height:3px; border-radius:50%; background:var(--faint); }}
 </style></head><body>
-  <div class=reveal style="text-align:center">
-    <div class=brand><span class=v>voice</span>2claude</div>
+  <div class=reveal>
+    <div class=brand>voice<span class=v>2claude</span></div>
     <div class=tag>Sprich. Steuere. Verbinde.</div>
   </div>
-  <div class="card reveal" style="animation-delay:.08s">
+  <div class=qwrap>
+    <div class=glowring></div>
     <div class=qframe>{svg}</div>
     <div class=scan><span class=pulse></span>Mit der iPhone-Kamera scannen</div>
   </div>
-  <a class="url reveal" style="animation-delay:.16s" href="{url}">{url}</a>
-  <div class="foot reveal" style="animation-delay:.24s"><span><b>Lokal</b></span><span><b>Privat</b></span><span>Audio bleibt auf deinem Mac</span></div>
+  <a class="url reveal" style="animation-delay:.18s" href="{url}">{url}</a>
+  <div class="foot reveal" style="animation-delay:.26s"><b>Lokal</b><span class=d></span><b>Privat</b><span class=d></span><span>Audio bleibt auf deinem Mac</span></div>
 </body></html>"""
     return Response(html, mimetype="text/html")
 
@@ -253,9 +262,12 @@ def transcribe():
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         f.save(tmp.name)
         path = tmp.name
+    # Sprache pro Diktat ueberschreibbar: ?lang=de|en|auto (auto = Whisper erkennt selbst)
+    req_lang = request.args.get("lang")
+    language = None if req_lang == "auto" else (req_lang or LANG)
     try:
         segments, info = model.transcribe(
-            path, language=LANG, vad_filter=True, initial_prompt=PROMPT
+            path, language=language, vad_filter=True, initial_prompt=PROMPT
         )
         text = "".join(s.text for s in segments).strip()
     finally:
@@ -293,6 +305,32 @@ def type_text():
 # Navigations-Tasten wechseln absichtlich Apps/Spaces/Fenster -> kein Guard,
 # sonst kommt man nach dem Wegwechseln nicht zurueck.
 NAV_KEYS = {"ctrl+left", "ctrl+right", "ctrl+up", "ctrl+down", "cmd+`"}
+
+
+@app.route("/image", methods=["POST"])
+@require_token
+def image():
+    if "image" not in request.files:
+        return jsonify(error="kein 'image'-Feld"), 400
+    f = request.files["image"]
+    suffix = os.path.splitext(f.filename or "")[1] or ".jpg"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        f.save(tmp.name)
+        path = tmp.name
+    try:
+        # Bild-Paste geht nur ins fokussierte Fenster (Cmd+V) -> Terminal-Guard.
+        if GUARD and not inject.is_terminal_frontmost():
+            return jsonify(sent=False, error="kein Terminal vorne")
+        ok = inject.paste_image(path, PASTE_APP)
+        if ok:
+            ding()
+            log_history("image", f.filename or "image")
+        return jsonify(sent=ok)
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
 
 
 @app.route("/key", methods=["POST"])

@@ -10,6 +10,7 @@ Backends (wie Text eingefuegt wird):
 Zusaetzlich: Fernbedienungstasten (Enter/Esc/Pfeile/Ctrl-C/...) via send_key().
 Plus Helfer: frontmost_app(), is_terminal_frontmost(), accessibility_ok().
 """
+import os
 import shutil
 import subprocess
 import sys
@@ -316,6 +317,32 @@ def inject_clipboard(text: str, submit: bool, app: str | None = None) -> bool:
     except Exception as e:
         _log(f"clipboard fehlgeschlagen: {e}")
         return False
+
+
+def paste_image(path: str, app: str | None = None) -> bool:
+    """Bild -> PNG -> Zwischenablage -> Cmd+V ins fokussierte Fenster.
+    Claude Code zeigt eingefuegte Bilder inline im Prompt."""
+    png = path + ".v2c.png"
+    try:
+        # iPhone-Fotos sind oft HEIC/JPEG -> sips konvertiert zuverlaessig nach PNG
+        subprocess.run(["sips", "-s", "format", "png", path, "--out", png],
+                       capture_output=True, check=True)
+        _osascript('set the clipboard to (read (POSIX file "%s") as «class PNGf»)' % png)
+        steps = []
+        if app:
+            steps.append('tell application "%s" to activate' % app)
+            steps.append("delay 0.15")
+        steps.append('tell application "System Events" to keystroke "v" using command down')
+        _osascript("\n".join(steps))
+        return True
+    except Exception as e:
+        _log(f"paste_image fehlgeschlagen: {e}")
+        return False
+    finally:
+        try:
+            os.unlink(png)
+        except OSError:
+            pass
 
 
 def tmux_target_exists(target: str) -> bool:
