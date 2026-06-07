@@ -265,28 +265,42 @@ def transcribe():
     # Sprache pro Diktat ueberschreibbar: ?lang=de|en|auto (auto = Whisper erkennt selbst)
     req_lang = request.args.get("lang")
     language = None if req_lang == "auto" else (req_lang or LANG)
+    text = ""
+    lang = (None if language is None else language) or "?"
+    is_partial = request.args.get("partial") == "1"
     try:
         segments, info = model.transcribe(
             path, language=language, vad_filter=True, initial_prompt=PROMPT
         )
         text = "".join(s.text for s in segments).strip()
+        lang = info.language
+    except Exception as e:
+        # Defekte/halbe Audio-Häppchen (häufig im Live-Modus) dürfen nicht 500en.
+        print(f"[voice2claude] transcribe-Fehler: {e}", flush=True)
+        if is_partial:
+            return jsonify(text="", partial=True, error=str(e))
+        return jsonify(text="", sent=False, backend=None, error="transcribe failed"), 200
     finally:
         try:
             os.unlink(path)
         except OSError:
             pass
 
-    print(f"[voice2claude] ({info.language}) {text!r}", flush=True)
+    # Live-Häppchen: nur Text zurück (kein History-Spam, kein Inject, kein Mini-Filter).
+    if is_partial:
+        return jsonify(text=text, partial=True, lang=lang)
+
+    print(f"[voice2claude] ({lang}) {text!r}", flush=True)
     # Leere / Mini-Clips (Fehlauslösung, Rauschen) nicht einfuegen.
     if len(text) < 2:
-        return jsonify(text="", sent=False, backend=None, lang=info.language, empty=True)
+        return jsonify(text="", sent=False, backend=None, lang=lang, empty=True)
 
     log_history("voice", text)
     # inject=0 -> nur transkribieren (Review-Modus: erst zeigen, dann /type)
     if request.args.get("inject", "1") == "0":
-        return jsonify(text=text, sent=False, backend=None, lang=info.language, injected=False)
+        return jsonify(text=text, sent=False, backend=None, lang=lang, injected=False)
     backend, sent = do_inject(text, submit)
-    return jsonify(text=text, sent=sent, backend=backend, lang=info.language)
+    return jsonify(text=text, sent=sent, backend=backend, lang=lang)
 
 
 @app.route("/transcribe-url", methods=["POST"])

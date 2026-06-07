@@ -40,7 +40,7 @@
 | ⇥↵ **One‑tap accept** | A single tap sends **Tab → Enter** to accept *and* submit Claude's pre‑filled suggestion. |
 | 🔀 **Session switch** | Every Claude window — even across Spaces — as a tappable list; tap to switch. |
 | 🎬 **Reel / Video → Text** | Paste an Instagram / YouTube / TikTok URL → transcribed locally (warm model, no reload) → into the transcript. |
-| 🗣 **Dictation** | Speak → local transcription → into the prompt. DE / EN / Auto. |
+| 🗣 **Live dictation** | Speak → words appear **live** in a field that grows with your text; **pause / resume** to think, read back what was understood, fix, then send. Fully local. DE / EN / Auto. |
 | 🎛 **Remote control** | Enter · Esc · ⌃C · arrows · digits · Tab + app / window navigation from your phone. |
 | 🖼 **Images** | Send a photo, screenshot **or clipboard image** (📋 paste) → appears inline in Claude's prompt. |
 | ▶️ **One‑click start** | A menu‑bar app (🎙️) — no terminal command needed. |

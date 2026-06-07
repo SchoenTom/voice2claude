@@ -166,8 +166,10 @@ body::before{ content:''; position:fixed; inset:0; z-index:0; pointer-events:non
 .toggle input:checked + .toggle-track{ background:rgba(0,198,255,0.4); border-color:rgba(0,198,255,0.4); }
 .toggle-thumb{ position:absolute; top:2px; left:2px; width:16px; height:16px; background:#fff; border-radius:50%; transition:transform .25s; box-shadow:0 1px 4px rgba(0,0,0,0.4); pointer-events:none; }
 .toggle input:checked ~ .toggle-thumb{ transform:translateX(15px); }
-.transcript-text{ width:100%; min-height:96px; max-height:240px; padding:15px 16px; background:transparent; border:none; outline:none;
-  color:var(--ink); font-family:var(--font-serif); font-size:16px; line-height:1.55; resize:none; -webkit-appearance:none; -webkit-overflow-scrolling:touch; }
+.transcript-text{ width:100%; min-height:120px; max-height:55vh; padding:15px 16px; background:transparent; border:none; outline:none;
+  color:var(--ink); font-family:var(--font-serif); font-size:16px; line-height:1.6; resize:none; -webkit-appearance:none; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  transition:height var(--dur-fast) var(--ease-io); }
+.transcript-card.live{ border-color:rgba(0,198,255,0.3); box-shadow:var(--inset-top), 0 0 24px rgba(0,198,255,0.12), var(--shadow-2); }
 .transcript-text::placeholder{ color:var(--ink-faint); font-style:italic; }
 .transcript-actions{ display:flex; align-items:center; justify-content:space-between; padding:11px 14px 14px; border-top:var(--hairline); gap:8px; }
 .btn-clear{ font-size:13px; font-weight:500; color:var(--ink-dim); background:var(--fill-2); border:var(--hairline); border-radius:100px; padding:0 18px; min-height:44px; -webkit-appearance:none; transition:transform var(--dur-fast) var(--ease-io); }
@@ -403,6 +405,7 @@ const mic=$('#mic'), miccard=$('#miccard'), ta=$('#text'), miclabel=$('#miclabel
       dot=$('#dot'), tname=$('#tname'), toastEl=$('#toast'), direct=$('#direct');
 const bars=[...document.querySelectorAll('.waveform-bar')];
 let recording=false, rec, chunks=[], stream, audioCtx, analyser, raf, wakeLock, sessionList=[];
+let liveState='idle', liveRec, liveStream, liveChunks=[], livePoll=null, partialBusy=false;  // Live-Transkription
 
 function haptic(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }  /* No-op auf iPhone, hilft auf Android */
 async function api(path, opts){
@@ -527,6 +530,12 @@ function levelLoop(){
     b.style.transform='scaleY('+(0.25+v*1.35)+')'; b.style.opacity=(0.5+v*0.5).toString(); });
   raf=requestAnimationFrame(levelLoop);
 }
+function startWave(s){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume();
+  analyser=audioCtx.createAnalyser(); analyser.fftSize=64; audioCtx.createMediaStreamSource(s).connect(analyser); levelLoop(); }catch(e){} }
+function stopWave(){ cancelAnimationFrame(raf); analyser=null; if(audioCtx){ audioCtx.close().catch(()=>{}); } audioCtx=null;
+  bars.forEach(b=>{ b.style.transform=''; b.style.opacity=''; }); }
+function autogrow(){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight, Math.round(window.innerHeight*0.55))+'px'; }
+ta.addEventListener('input', autogrow);
 async function startRec(){
   try{ stream=await navigator.mediaDevices.getUserMedia({audio:true}); }
   catch(e){ toast('Mikrofon verweigert (HTTPS nötig)', true); return; }
@@ -535,15 +544,13 @@ async function startRec(){
   rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
   rec.onstop=upload; rec.start();
   recording=true; miccard.classList.add('rec'); miclabel.innerHTML='<b>Höre zu…</b> tippen zum Stoppen';
-  try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume();
-    analyser=audioCtx.createAnalyser(); analyser.fftSize=64; audioCtx.createMediaStreamSource(stream).connect(analyser); levelLoop(); }catch(e){}
+  startWave(stream);
   try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
 }
 function stopRec(){
   if(rec&&rec.state==='recording') rec.stop();
   if(stream) stream.getTracks().forEach(t=>t.stop());
-  cancelAnimationFrame(raf); analyser=null; if(audioCtx)audioCtx.close().catch(()=>{}); audioCtx=null;
-  bars.forEach(b=>{ b.style.transform=''; b.style.opacity=''; });
+  stopWave();
   recording=false; miccard.classList.remove('rec');
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
 }
@@ -563,18 +570,75 @@ async function upload(){
   }catch(e){ toast('Fehler: '+e.message, true); }
   finally{ miclabel.innerHTML='<b>Tippen</b> zum Sprechen'; }
 }
-mic.addEventListener('click', ()=>{ haptic(recording?[6,30,6]:12); recording?stopRec():startRec(); });
+/* ---- Live-Transkription: Mic = Sprechen ⇄ Pause; Text läuft ~alle 1,8 s live ins Feld ---- */
+const tcard = ()=>document.querySelector('.transcript-card');
+async function livePartial(final){
+  if(!liveChunks.length) return;
+  if(partialBusy && !final) return;
+  partialBusy=true;
+  try{
+    const mime=(liveRec&&liveRec.mimeType)||'audio/webm';
+    const ext=mime.includes('mp4')||mime.includes('aac')?'m4a':(mime.includes('ogg')?'ogg':'webm');
+    const fd=new FormData(); fd.append('audio', new Blob(liveChunks,{type:mime}), 'live.'+ext);
+    const j=await (await api('/transcribe?partial=1&lang='+currentLang,{method:'POST',body:fd})).json();
+    if(j && typeof j.text==='string' && (final || liveState==='rec')){ ta.value=j.text; autogrow(); ta.scrollTop=ta.scrollHeight; }
+  }catch(e){}
+  finally{ partialBusy=false; }
+}
+async function liveStart(){
+  try{ liveStream=await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e){ toast('Mikrofon verweigert (HTTPS nötig)', true); return; }
+  liveChunks=[]; const mime=pickMime();
+  try{ liveRec = mime?new MediaRecorder(liveStream,{mimeType:mime}):new MediaRecorder(liveStream); }catch(e){ liveRec=new MediaRecorder(liveStream); }
+  liveRec.ondataavailable=e=>{ if(e.data&&e.data.size) liveChunks.push(e.data); };
+  liveRec.start(1000);
+  liveState='rec'; miccard.classList.add('rec'); if(tcard())tcard().classList.add('live'); ta.readOnly=true;
+  miclabel.innerHTML='<b>Live…</b> tippen zum Pausieren';
+  startWave(liveStream);
+  livePoll=setInterval(livePartial, 1800);
+  try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+}
+function livePause(){
+  if(liveRec&&liveRec.state==='recording') liveRec.pause();
+  clearInterval(livePoll); livePoll=null; stopWave();
+  liveState='paused'; miccard.classList.remove('rec'); ta.readOnly=false;
+  miclabel.innerHTML='<b>Pausiert</b> — tippen für weiter';
+  livePartial(true);
+}
+function liveResume(){
+  if(liveRec&&liveRec.state==='paused') liveRec.resume();
+  liveState='rec'; miccard.classList.add('rec'); ta.readOnly=true;
+  miclabel.innerHTML='<b>Live…</b> tippen zum Pausieren';
+  startWave(liveStream);
+  livePoll=setInterval(livePartial, 1800);
+}
+async function liveFinish(){
+  clearInterval(livePoll); livePoll=null; stopWave();
+  if(liveRec && liveRec.state!=='inactive'){ await new Promise(r=>{ liveRec.onstop=r; try{liveRec.stop();}catch(e){r();} }); }
+  if(liveStream) liveStream.getTracks().forEach(t=>t.stop());
+  await livePartial(true);
+  liveState='idle'; miccard.classList.remove('rec'); if(tcard())tcard().classList.remove('live'); ta.readOnly=false;
+  miclabel.innerHTML='<b>Tippen</b> zum Sprechen';
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
+}
+mic.addEventListener('click', ()=>{
+  if(direct.checked){ haptic(recording?[6,30,6]:12); recording?stopRec():startRec(); return; }   // Direkt = schneller Ein-Schuss
+  if(liveState==='idle'){ haptic(12); liveStart(); }
+  else if(liveState==='rec'){ haptic([6,30,6]); livePause(); }
+  else { haptic(12); liveResume(); }
+});
 
 /* ---- Textfeld ---- */
 $('#send').onclick=async ()=>{
+  if(liveState!=='idle') await liveFinish();   // Live beenden + letzte Worte sichern
   const t=ta.value.trim(); if(!t){ toast('Feld ist leer'); return; }
   try{
     const j=await (await api('/type',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,send:1})})).json();
-    if(j.sent){ toast('✓ gesendet'); ta.value=''; }
+    if(j.sent){ toast('✓ gesendet'); ta.value=''; autogrow(); }
     else toast(j.backend==='clipboard_fallback'?'⧉ Zwischenablage (kein Terminal vorne)':'nicht gesendet', true);
   }catch(e){ toast('Fehler: '+e.message, true); }
 };
-$('#clear').onclick=()=>{ ta.value=''; };
+$('#clear').onclick=()=>{ if(liveState!=='idle') liveFinish(); ta.value=''; autogrow(); };
 
 /* ---- Tasten + Navigation ---- */
 function flashEl(b){ haptic(8); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); setTimeout(()=>b.classList.remove('flash'),200); }

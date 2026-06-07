@@ -15,6 +15,12 @@ import shutil
 import subprocess
 import sys
 
+# Pause zwischen Cmd+V (Einfügen) und Enter (Absenden) im paste-Backend.
+# Muss groß genug sein, damit Claudes TUI den eingefügten Text VOR dem Enter
+# ins Eingabe-Modell übernommen hat — sonst wird vorhandener Prompt-Inhalt
+# abgeschickt und das Diktat geht verloren (Race bei nicht-leerem Prompt).
+SUBMIT_DELAY = float(os.environ.get("V2C_SUBMIT_DELAY", "0.35"))
+
 # Bundle-IDs gaengiger Terminals — nur dahin darf paste/key automatisch tippen.
 TERMINAL_BUNDLE_IDS = {
     "com.apple.Terminal",
@@ -300,7 +306,7 @@ def inject_paste(text: str, submit: bool, app: str | None = None) -> bool:
         steps.append('tell application "System Events"')
         steps.append('  keystroke "v" using command down')
         if submit:
-            steps.append("  delay 0.12")
+            steps.append(f"  delay {SUBMIT_DELAY}")
             steps.append("  key code 36")
         steps.append("end tell")
         _osascript("\n".join(steps))
