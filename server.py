@@ -269,8 +269,11 @@ def transcribe():
     lang = (None if language is None else language) or "?"
     is_partial = request.args.get("partial") == "1"
     try:
+        # Live-Segmente schicken den Schwanz des bisherigen Texts als Kontext (ctx)
+        # mit → saubere Übergänge an den Segmentgrenzen.
+        initial_prompt = (request.args.get("ctx") if is_partial else None) or PROMPT
         segments, info = model.transcribe(
-            path, language=language, vad_filter=True, initial_prompt=PROMPT
+            path, language=language, vad_filter=True, initial_prompt=initial_prompt
         )
         text = "".join(s.text for s in segments).strip()
         lang = info.language

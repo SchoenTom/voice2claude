@@ -405,7 +405,7 @@ const mic=$('#mic'), miccard=$('#miccard'), ta=$('#text'), miclabel=$('#miclabel
       dot=$('#dot'), tname=$('#tname'), toastEl=$('#toast'), direct=$('#direct');
 const bars=[...document.querySelectorAll('.waveform-bar')];
 let recording=false, rec, chunks=[], stream, audioCtx, analyser, raf, wakeLock, sessionList=[];
-let liveState='idle', liveRec, liveStream, liveChunks=[], livePoll=null, partialBusy=false;  // Live-Transkription
+let liveState='idle', liveRec, liveStream, liveSegTimer=null, liveLoopP=null, committed='';  // Live-Transkription (Segment-Streaming)
 
 function haptic(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }  /* No-op auf iPhone, hilft auf Android */
 async function api(path, opts){
@@ -570,54 +570,80 @@ async function upload(){
   }catch(e){ toast('Fehler: '+e.message, true); }
   finally{ miclabel.innerHTML='<b>Tippen</b> zum Sprechen'; }
 }
-/* ---- Live-Transkription: Mic = Sprechen ⇄ Pause; Text läuft ~alle 1,8 s live ins Feld ---- */
+/* ---- Live-Transkription (Segment-Streaming = konstante, niedrige Latenz) ----
+   Statt den wachsenden Puffer immer neu zu transkribieren (Delay wächst!), nehmen wir
+   kurze EIGENSTÄNDIGE Segmente auf und HÄNGEN den Text an. Der Schwanz des bisherigen
+   Texts geht als Kontext (ctx) mit → saubere Übergänge an den Segmentgrenzen. */
 const tcard = ()=>document.querySelector('.transcript-card');
-async function livePartial(final){
-  if(!liveChunks.length) return;
-  if(partialBusy && !final) return;
-  partialBusy=true;
+const SEG_MS = 2000;
+function recordSegment(){
+  return new Promise(res=>{
+    const mime=pickMime(); let r;
+    try{ r = mime ? new MediaRecorder(liveStream,{mimeType:mime}) : new MediaRecorder(liveStream); }catch(e){ r=new MediaRecorder(liveStream); }
+    liveRec=r; const parts=[];
+    r.ondataavailable=e=>{ if(e.data&&e.data.size) parts.push(e.data); };
+    r.onstop=()=> res(parts.length ? new Blob(parts,{type:r.mimeType||'audio/webm'}) : null);
+    try{ r.start(); }catch(e){ res(null); return; }
+    liveSegTimer=setTimeout(()=>{ try{ if(r.state==='recording') r.stop(); }catch(e){} }, SEG_MS);
+  });
+}
+async function transcribeSegment(blob){
+  if(!blob || !blob.size) return;
+  const ext=(blob.type.includes('mp4')||blob.type.includes('aac'))?'m4a':(blob.type.includes('ogg')?'ogg':'webm');
+  const fd=new FormData(); fd.append('audio',blob,'seg.'+ext);
+  const ctx=encodeURIComponent(committed.slice(-160));
   try{
-    const mime=(liveRec&&liveRec.mimeType)||'audio/webm';
-    const ext=mime.includes('mp4')||mime.includes('aac')?'m4a':(mime.includes('ogg')?'ogg':'webm');
-    const fd=new FormData(); fd.append('audio', new Blob(liveChunks,{type:mime}), 'live.'+ext);
-    const j=await (await api('/transcribe?partial=1&lang='+currentLang,{method:'POST',body:fd})).json();
-    if(j && typeof j.text==='string' && (final || liveState==='rec')){ ta.value=j.text; autogrow(); ta.scrollTop=ta.scrollHeight; }
+    const j=await (await api('/transcribe?partial=1&lang='+currentLang+'&ctx='+ctx,{method:'POST',body:fd})).json();
+    if(j && typeof j.text==='string' && j.text.trim()){
+      committed=(committed?committed+' ':'')+j.text.trim();
+      ta.value=committed; autogrow(); ta.scrollTop=ta.scrollHeight;
+    }
   }catch(e){}
-  finally{ partialBusy=false; }
+}
+async function segmentLoop(){
+  /* Lückenlos aufnehmen: das nächste Segment startet SOFORT nach dem Stopp des
+     vorigen; die Transkription läuft im Hintergrund, aber STRENG der Reihe nach
+     (FIFO-Queue, ein Drainer) — kein Audio-Verlust zwischen den Segmenten. */
+  const queue=[]; let draining=false;
+  async function drain(){
+    if(draining) return; draining=true;
+    while(queue.length) await transcribeSegment(queue.shift());
+    draining=false;
+  }
+  while(liveState==='rec'){
+    const blob=await recordSegment();
+    if(blob){ queue.push(blob); drain(); }   // nicht awaiten → Aufnahme läuft weiter
+  }
+  await drain();   // beim Pausieren/Stoppen: restliche Segmente fertig anhängen
 }
 async function liveStart(){
   try{ liveStream=await navigator.mediaDevices.getUserMedia({audio:true}); }
   catch(e){ toast('Mikrofon verweigert (HTTPS nötig)', true); return; }
-  liveChunks=[]; const mime=pickMime();
-  try{ liveRec = mime?new MediaRecorder(liveStream,{mimeType:mime}):new MediaRecorder(liveStream); }catch(e){ liveRec=new MediaRecorder(liveStream); }
-  liveRec.ondataavailable=e=>{ if(e.data&&e.data.size) liveChunks.push(e.data); };
-  liveRec.start(1000);
+  committed = ta.value.trim();
   liveState='rec'; miccard.classList.add('rec'); if(tcard())tcard().classList.add('live'); ta.readOnly=true;
   miclabel.innerHTML='<b>Live…</b> tippen zum Pausieren';
   startWave(liveStream);
-  livePoll=setInterval(livePartial, 1800);
   try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+  liveLoopP=segmentLoop();
 }
 function livePause(){
-  if(liveRec&&liveRec.state==='recording') liveRec.pause();
-  clearInterval(livePoll); livePoll=null; stopWave();
-  liveState='paused'; miccard.classList.remove('rec'); ta.readOnly=false;
+  liveState='paused'; clearTimeout(liveSegTimer); stopWave();
+  if(liveRec && liveRec.state==='recording'){ try{liveRec.stop();}catch(e){} }   // laufendes Segment schneiden + transkribieren
+  miccard.classList.remove('rec'); ta.readOnly=false;
   miclabel.innerHTML='<b>Pausiert</b> — tippen für weiter';
-  livePartial(true);
 }
 function liveResume(){
-  if(liveRec&&liveRec.state==='paused') liveRec.resume();
   liveState='rec'; miccard.classList.add('rec'); ta.readOnly=true;
   miclabel.innerHTML='<b>Live…</b> tippen zum Pausieren';
   startWave(liveStream);
-  livePoll=setInterval(livePartial, 1800);
+  liveLoopP=segmentLoop();
 }
 async function liveFinish(){
-  clearInterval(livePoll); livePoll=null; stopWave();
-  if(liveRec && liveRec.state!=='inactive'){ await new Promise(r=>{ liveRec.onstop=r; try{liveRec.stop();}catch(e){r();} }); }
-  if(liveStream) liveStream.getTracks().forEach(t=>t.stop());
-  await livePartial(true);
-  liveState='idle'; miccard.classList.remove('rec'); if(tcard())tcard().classList.remove('live'); ta.readOnly=false;
+  liveState='idle'; clearTimeout(liveSegTimer); stopWave();
+  if(liveRec && liveRec.state==='recording'){ try{liveRec.stop();}catch(e){} }
+  try{ await liveLoopP; }catch(e){}   // letztes Segment fertig anhängen
+  if(liveStream){ liveStream.getTracks().forEach(t=>t.stop()); liveStream=null; }
+  miccard.classList.remove('rec'); if(tcard())tcard().classList.remove('live'); ta.readOnly=false;
   miclabel.innerHTML='<b>Tippen</b> zum Sprechen';
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
 }
