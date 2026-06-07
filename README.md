@@ -1,8 +1,8 @@
 # voice2claude
 
-> 🇬🇧 *Turn your iPhone into a local voice‑dictation device **and remote control** for [Claude Code](https://claude.com/claude-code). Speak, edit, send, switch between parallel agent sessions and approve — from your pocket. 100% local (faster‑whisper), macOS, no cloud, no accounts. (README in German below.)*
+> 🇬🇧 *Turn your Phone into a local voice‑dictation device **and remote control** for [Claude Code](https://claude.com/claude-code). Speak, edit, send, switch between parallel agent sessions and approve — from your pocket. 100% local (faster‑whisper), macOS, no cloud, no accounts. (README in German below.)*
 
-**Dein iPhone als Diktiergerät _und Fernbedienung_ für [Claude Code](https://claude.com/claude-code).**
+**Dein Phone als Diktiergerät _und Fernbedienung_ für [Claude Code](https://claude.com/claude-code).**
 Sprich ins Handy → der Text wird **lokal** transkribiert (faster-whisper, kein
 Cloud-Upload) → landet im Prompt deiner laufenden `claude`-Session. Plus ein
 Fernbedienungs-Panel: Claude vom Sofa aus bestätigen, stoppen, weiterschicken,
