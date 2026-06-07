@@ -145,7 +145,8 @@ body::before{ content:''; position:fixed; inset:0; z-index:0; pointer-events:non
 .mic-label{ font-size:14px; font-weight:500; color:var(--ink-dim); }
 .mic-label b{ color:var(--ink); font-weight:600; }
 .mic-sublabel{ font-size:11px; color:var(--ink-faint); }
-.mic-controls{ display:flex; align-items:center; gap:10px; margin-top:2px; }
+.mic-controls{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:2px; }
+.imgrow{ display:flex; gap:10px; }
 .seg{ display:flex; background:var(--fill-1); border:var(--hairline); border-radius:11px; overflow:hidden; }
 .seg button{ border:0; background:transparent; color:var(--ink-faint); font-size:12px; font-weight:600; padding:0 15px; min-height:44px; -webkit-appearance:none; transition:background var(--dur-fast), color var(--dur-fast); }
 .seg button.on{ background:rgba(0,198,255,0.16); color:var(--teal); }
@@ -314,7 +315,10 @@ body::before{ content:''; position:fixed; inset:0; z-index:0; pointer-events:non
           <button data-lang="en">EN</button>
           <button data-lang="auto">Auto</button>
         </div>
-        <button class="imgbtn" id="imgbtn">📷&nbsp;Bild</button>
+        <div class="imgrow">
+          <button class="imgbtn" id="imgbtn">📷&nbsp;Bild</button>
+          <button class="imgbtn" id="pastebtn">📋&nbsp;Einfügen</button>
+        </div>
         <input type="file" accept="image/*" id="imgin" hidden>
       </div>
     </div>
@@ -624,19 +628,38 @@ document.querySelectorAll('#langseg button').forEach(b=>{
     document.querySelectorAll('#langseg button').forEach(x=>x.classList.toggle('on', x===b)); };
 });
 
-/* ---- Bild senden (Foto -> Zwischenablage -> in Claudes Prompt) ---- */
+/* ---- Bild senden: Datei · Zwischenablage-Button (Clipboard-API) · ⌘V-Paste ---- */
 const imgin=$('#imgin');
-$('#imgbtn').onclick=()=>imgin.click();
-imgin.onchange=async ()=>{
-  if(!imgin.files || !imgin.files[0]) return;
-  const fd=new FormData(); fd.append('image', imgin.files[0]);
+async function sendImage(blob, name){
+  if(!blob) return;
+  const fd=new FormData(); fd.append('image', blob, name||'image.png');
   toast('Bild wird gesendet …');
   try{
     const j=await (await api('/image',{method:'POST',body:fd})).json();
     toast(j.sent?'✓ Bild in den Prompt eingefügt':(j.error||'nicht gesendet'), !j.sent);
   }catch(e){ toast('Fehler: '+e.message, true); }
-  imgin.value='';
+}
+$('#imgbtn').onclick=()=>imgin.click();
+imgin.onchange=()=>{ if(imgin.files&&imgin.files[0]){ sendImage(imgin.files[0], imgin.files[0].name); imgin.value=''; } };
+/* Screenshot → kopieren → „📋 Einfügen": liest das Bild aus der Zwischenablage (iOS fragt 1× „Einfügen erlauben"). */
+$('#pastebtn').onclick=async ()=>{
+  if(!(navigator.clipboard && navigator.clipboard.read)){ toast('Zwischenablage-Lesen nicht unterstützt — nutze 📷 Bild', true); return; }
+  try{
+    const items=await navigator.clipboard.read();
+    for(const it of items){
+      const type=it.types.find(t=>t.startsWith('image/'));
+      if(type){ const blob=await it.getType(type); haptic(10); await sendImage(blob,'clipboard.png'); return; }
+    }
+    toast('Kein Bild in der Zwischenablage', true);
+  }catch(e){ toast('Zwischenablage nicht lesbar (Erlaubnis nötig)', true); }
 };
+/* Hardware-Tastatur: ⌘V / Strg+V fügt ein Bild direkt ein */
+window.addEventListener('paste', e=>{
+  const items=(e.clipboardData&&e.clipboardData.items)||[];
+  for(const it of items){
+    if(it.type && it.type.startsWith('image/')){ const blob=it.getAsFile(); if(blob){ e.preventDefault(); sendImage(blob,'paste.png'); return; } }
+  }
+});
 
 poll(); loadSessions(); setInterval(poll, 3000); setInterval(loadSessions, 3500);
 </script>

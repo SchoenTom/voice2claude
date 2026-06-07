@@ -42,7 +42,7 @@
 | 🎬 **Reel / Video → Text** | Paste an Instagram / YouTube / TikTok URL → transcribed locally (warm model, no reload) → into the transcript. |
 | 🗣 **Dictation** | Speak → local transcription → into the prompt. DE / EN / Auto. |
 | 🎛 **Remote control** | Enter · Esc · ⌃C · arrows · digits · Tab + app / window navigation from your phone. |
-| 🖼 **Images** | Send a photo or screenshot → appears inline in Claude's prompt. |
+| 🖼 **Images** | Send a photo, screenshot **or clipboard image** (📋 paste) → appears inline in Claude's prompt. |
 | ▶️ **One‑click start** | A menu‑bar app (🎙️) — no terminal command needed. |
 | 🛡 **Safety guard** | Types only into terminals; otherwise it just lands on the clipboard. |
 
