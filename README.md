@@ -1,172 +1,179 @@
-# voice2claude
+<a id="top"></a>
+<div align="center">
 
-> 🇬🇧 *Turn your Phone into a local voice‑dictation device **and remote control** for [Claude Code](https://claude.com/claude-code). Speak, edit, send, switch between parallel agent sessions and approve — from your pocket. 100% local (faster‑whisper), macOS, no cloud, no accounts. (README in German below.)*
+<img src="docs/hero.png" alt="voice2claude — your phone becomes a dictation pad and remote control for Claude Code" width="840">
 
-**Dein Phone als Diktiergerät _und Fernbedienung_ für [Claude Code](https://claude.com/claude-code).**
-Sprich ins Handy → der Text wird **lokal** transkribiert (faster-whisper, kein
-Cloud-Upload) → landet im Prompt deiner laufenden `claude`-Session. Plus ein
-Fernbedienungs-Panel: Claude vom Sofa aus bestätigen, stoppen, weiterschicken,
-**Bilder einfügen** und auf einen Blick sehen, **welcher Agent gerade auf dich wartet**.
-
-<p align="center">
-  <img src="docs/screenshot.png" width="300" alt="voice2claude — Aurora UI: Mic-Orb, Sessions mit Status, Fernbedienung">
+<p>
+  <img src="https://img.shields.io/badge/license-MIT-22d3ee?style=flat-square" alt="MIT License">
+  <img src="https://img.shields.io/badge/platform-macOS-0b0f1c?style=flat-square&logo=apple" alt="macOS">
+  <img src="https://img.shields.io/badge/%E2%97%8F%20100%25-local-10d98e?style=flat-square" alt="100% local">
+  <img src="https://img.shields.io/badge/whisper-faster--whisper-a855f7?style=flat-square" alt="faster-whisper">
+  <a href="https://github.com/SchoenTom/voice2claude/stargazers"><img src="https://img.shields.io/github/stars/SchoenTom/voice2claude?style=flat-square&color=f5b042" alt="stars"></a>
 </p>
 
-### Pipeline
+<p>
+  <a href="#-quick-start">Quick start</a> &nbsp;·&nbsp;
+  <a href="#-features">Features</a> &nbsp;·&nbsp;
+  <a href="#-how-it-works">How it works</a> &nbsp;·&nbsp;
+  <a href="#deutsch">🇩🇪 Deutsch</a>
+</p>
 
-```
-  ┌─ iPhone ────────────┐        ┌─ Mac (voice2claude.app) ───────────────────────┐
-  │ 🎙️ sprechen          │ audio  │  Flask-Server                                   │
-  │ ⌨️ Fernbedienung      │ ─────► │   ├─ faster-whisper  (lokal, kein Cloud)        │
-  │ (Browser / Shortcut) │  HTTP  │   │     └─► Text                                 │
-  └─────────┬────────────┘        │   ├─ Safety-Guard  (nur Terminals)              │
-            │                     │   └─► osascript / tmux ─► fokussiertes Terminal │
-            │   QR / .local-Name  │                              │                  │
-            └─────────────────────┤                              ▼                  │
-                  (kein IP-Tippen) │                      ┌─ claude (CLI) ─┐         │
-                                   └──────────────────────│  dein Prompt   │─────────┘
-                                                          └────────────────┘
-```
+</div>
 
-Audio wird **lokal** transkribiert und verlässt deinen Mac nie. Die Verbindung
-läuft über den stabilen Bonjour-Namen `<dein-mac>.local` — **keine IP-Adresse
-mehr eintippen**, auch wenn sich das Netz ändert.
-
-- 🔒 **Lokal & privat** — Audio verlässt deinen Mac nie. Keine Accounts, keine Cloud.
-- 🗣 **Diktat** — sprechen → lokal transkribiert (faster-whisper) → in den Prompt. **DE / EN / Auto** umschaltbar.
-- 🏰 **Kontrollturm** — pro Session ein Status (**arbeitet / bereit / aktiv**) — sieh sofort, welcher Agent auf dich wartet.
-- 🔀 **Session-Wechsel** — alle Claude-Fenster (auch über Spaces) als Liste, antippen wechselt.
-- 🎛 **Fernbedienung** — Enter / Esc / ⌃C / Pfeile / Ziffern / **Tab** + App-/Fenster-Navigation vom Handy.
-- ⇥↵ **Vorschlag übernehmen** — ein Tap sendet **Tab → Enter** (Claudes vorgefertigte Prompts annehmen & absenden).
-- 🎬 **Reel / Video → Text** — Instagram-/YouTube-/TikTok-URL einfügen → Audio wird lokal transkribiert (**warmes Modell, kein Reload**) → Text landet im Transkript.
-- 🖼 **Bilder** — Foto/Screenshot vom Handy → erscheint inline in Claudes Prompt.
-- ▶️ **Start-Button** — Menüleisten-App (🎙️), kein Terminal-Befehl nötig.
-- 🛡 **Safety-Guard** — tippt nur in Terminals; sonst nur Zwischenablage.
+> **What is this?** Push to talk on your phone → your words are transcribed **on your Mac** (faster‑whisper, never the cloud) → dropped straight into your running [`claude`](https://claude.com/claude-code) session. A live **control tower** shows which agent is waiting on you; one tap accepts its suggestion, stops it, or switches sessions across Spaces — all from the couch. **100% local. No accounts, no API keys, no cloud.**
 
 ---
 
-## So funktioniert es grundlegend (wichtig!)
+## ✦ Why it's different
 
-Es gibt **ein Bau-Werkzeug** und **eine App**. Verwechsel sie nicht:
+| | |
+|---|---|
+| 🔒 **Local & private** | Audio is transcribed on your Mac and **never leaves it**. No accounts, no cloud, no keys. |
+| 🗣 **Dictate** | Hold to talk → on‑device transcription → straight into the prompt. DE / EN / Auto. |
+| 🎛 **Remote‑control** | The whole keyboard from your pocket — confirm, stop, navigate, accept suggestions, switch agents. |
+
+## ⚡ Features
+
+| | |
+|---|---|
+| 🏰 **Control tower** | Per‑session status — **working / ready / active**. See at a glance which agent is waiting on you; the waiting ones rise to the top. |
+| ⇥↵ **One‑tap accept** | A single tap sends **Tab → Enter** to accept *and* submit Claude's pre‑filled suggestion. |
+| 🔀 **Session switch** | Every Claude window — even across Spaces — as a tappable list; tap to switch. |
+| 🎬 **Reel / Video → Text** | Paste an Instagram / YouTube / TikTok URL → transcribed locally (warm model, no reload) → into the transcript. |
+| 🗣 **Dictation** | Speak → local transcription → into the prompt. DE / EN / Auto. |
+| 🎛 **Remote control** | Enter · Esc · ⌃C · arrows · digits · Tab + app / window navigation from your phone. |
+| 🖼 **Images** | Send a photo or screenshot → appears inline in Claude's prompt. |
+| ▶️ **One‑click start** | A menu‑bar app (🎙️) — no terminal command needed. |
+| 🛡 **Safety guard** | Types only into terminals; otherwise it just lands on the clipboard. |
+
+---
+
+## 🚀 Quick start
+
+> Requires **macOS** + phone on the **same Wi‑Fi**. First run downloads the Whisper model (`small` ≈ 460 MB).
+
+1. **Double‑click `install.command`** — sets everything up **and builds `voice2claude.app`**.
+2. **Drag `voice2claude.app` into your Dock**, then right‑click → **Open** once (Gatekeeper, first time only).
+3. Click the **🎙️ menu‑bar icon → "📱 Open on iPhone (QR)"** → scan with your phone's camera → the interface opens. **Talk, tap, control.**
+
+> **Tip:** 🎙️ → "Start at login" and you never touch a terminal again. Prefer the terminal? `./run.sh`.
+> Without the one Accessibility permission it still works — text lands on the clipboard, you press ⌘V.
+
+---
+
+## 🔧 How it works
+
+```
+  ┌─ Phone ─────────────┐        ┌─ Mac (voice2claude.app) ───────────────────────┐
+  │ 🎙️ talk              │ audio  │  Flask server                                   │
+  │ ⌨️ remote control     │ ─────► │   ├─ faster-whisper   (local, no cloud)         │
+  │ (browser / Shortcut) │  HTTP  │   │     └─► text                                 │
+  └─────────┬────────────┘        │   ├─ safety guard     (terminals only)          │
+            │                     │   └─► osascript / tmux ─► focused terminal      │
+            │  QR / .local name   │                              │                  │
+            └─────────────────────┤                              ▼                  │
+                  (no IP typing)   │                      ┌─ claude (CLI) ─┐         │
+                                   └──────────────────────│  your prompt   │─────────┘
+                                                          └────────────────┘
+```
+
+Audio is transcribed **locally** and never leaves your Mac. The connection uses the stable Bonjour name `<your-mac>.local` — **no more typing IP addresses**, even when the network changes.
+
+### Remote‑control keys
+
+| Key | What it does |
+|---|---|
+| ↵ / ⎋ / ↑ ↓ | confirm / cancel / navigate menus |
+| 1 2 3 / y / n | pick options, yes / no |
+| ⇥ · ⇥↵ | Tab · **accept suggestion** (Tab → Enter) |
+| ⌃C | stop the running agent |
+| ⇧⇥ | toggle Claude Code mode |
+| App ← → · ⌘T | jump between apps / terminal tabs |
+
+`/key` understands arbitrary combos — `cmd`, `shift`, `ctrl`, `opt` + any key. One button = any shortcut.
+
+---
+
+<a id="deutsch"></a>
+<details>
+<summary><b>🇩🇪 Anleitung (Deutsch)</b></summary>
+
+<br>
+
+**Dein Phone als Diktiergerät _und Fernbedienung_ für [Claude Code](https://claude.com/claude-code).** Sprich ins Handy → der Text wird **lokal** transkribiert (faster‑whisper, kein Cloud‑Upload) → landet im Prompt deiner laufenden `claude`‑Session. Plus ein Fernbedienungs‑Panel: bestätigen, stoppen, weiterschicken, **Bilder einfügen** und auf einen Blick sehen, **welcher Agent gerade auf dich wartet**.
+
+### So funktioniert es grundlegend
+
+Es gibt **ein Bau‑Werkzeug** und **eine App** — verwechsle sie nicht:
 
 | | was es ist | wie oft |
 |---|---|---|
 | `install.command` | **Werkzeug** — richtet alles ein **und baut die App** | **1×** |
 | **`voice2claude.app`** | **die echte App** (Icon 🎙️) — das, was du benutzt | täglich |
 
-Du lässt das Werkzeug **einmal** laufen; danach klickst du nur noch die App.
+### Einrichten (einmalig, ~2 Min)
 
-## Einrichten (einmalig, ~2 Min)
-
-1. **`install.command` doppelklicken.** Richtet alles ein, baut **`voice2claude.app`**
-   und öffnet den Finder, der sie zeigt.
-2. **`voice2claude.app` ins Dock ziehen** (genau wie jede andere App).
+1. **`install.command` doppelklicken.** Richtet alles ein, baut **`voice2claude.app`** und öffnet den Finder.
+2. **`voice2claude.app` ins Dock ziehen.**
 3. Per **Rechtsklick → „Öffnen"** einmal starten (Gatekeeper, nur beim 1. Mal).
 4. Falls 🎙️ „⚠️ Bedienungshilfen aktivieren" zeigt → klicken → **`voice2claude`** einschalten.
 
-## Täglich benutzen
+### Täglich benutzen
 
-1. **Dock-Icon 🎙️ klicken** → Server startet automatisch im Hintergrund (kein Terminal).
-2. Im **🎙️-Menü → „📱 Auf iPhone öffnen (QR)"** → großer QR am Mac.
-3. **iPhone-Kamera drauf** (gleiches WLAN/Hotspot) → Oberfläche öffnet sich. Reden/tippen.
+1. **Dock‑Icon 🎙️ klicken** → Server startet automatisch im Hintergrund.
+2. **🎙️‑Menü → „📱 Auf iPhone öffnen (QR)"** → großer QR am Mac.
+3. **iPhone‑Kamera drauf** (gleiches WLAN) → Oberfläche öffnet sich. Reden / tippen.
 
-> **Tipp:** 🎙️ → „Bei Anmeldung starten" → die App ist ab Login immer da, du
-> klickst nie wieder irgendwas. Reiner Terminal-Start ginge auch: `./run.sh`.
-> Erster Lauf lädt das Whisper-Modell (`small` ≈ 460 MB).
+> **Tipp:** 🎙️ → „Bei Anmeldung starten" → immer da. Terminal‑Start ginge auch: `./run.sh`.
 
----
+### Die eine Einrichtung, die zählt: Bedienungshilfen
 
-## Die eine Einrichtung, die zählt: Bedienungshilfen
+Damit der Text sich **selbst tippt**, braucht macOS einmalig die Erlaubnis, Tastendrücke zu senden:
+**Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen** → den Eintrag auf **AN** stellen
+(`voice2claude` bei App‑Start, dein **Terminal** bei `./run.sh`). Am einfachsten: im 🎙️‑Menü **„⚠️ Bedienungshilfen aktivieren"**. **Ohne** Freigabe geht alles trotzdem — der Text landet in der Zwischenablage, du drückst `⌘V`.
 
-Damit der Text sich **selbst tippt**, braucht macOS einmalig die Erlaubnis,
-Tastendrücke zu senden:
+### Die zwei Handy‑Clients
 
-**Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen** → den
-Eintrag auf **AN** stellen:
-- Startest du über **`voice2claude.app`** → schalte **`voice2claude`** ein.
-- Startest du über **`./run.sh`** im Terminal → schalte dein **Terminal** ein.
+- **A — iOS‑Kurzbefehl** (Diktat, HTTP, kein Zertifikat): „Audio aufnehmen" → „Inhalte von URL abrufen" (POST `http://<MAC-IP>:8765/transcribe`, Formular, Datei‑Feld `audio`). Auf „Auf‑Rückseite‑tippen" legen.
+- **B — Browser** (Diktat **+ Fernbedienung**, HTTPS): `https://<MAC-IP>:8766/` öffnen, Zertifikatswarnung einmalig akzeptieren. Volles UI: Push‑to‑talk, Kontrollturm, Fernsteuerung, Status‑Zeile. Server lauscht parallel auf **HTTP 8765** + **HTTPS 8766**.
 
-Am einfachsten: im 🎙️-Menü **„⚠️ Bedienungshilfen aktivieren"** klicken — das
-öffnet die richtige Seite und erklärt den Schalter. `./doctor.sh` prüft es auch.
+</details>
 
-- Steht der Eintrag nicht in der Liste? `+` unten → den App-Pfad wählen → AN.
-- **Ohne** Freigabe geht trotzdem alles — der Text landet in der Zwischenablage,
-  du drückst `⌘V` (Modus `clipboard`). Nichts ist blockiert, nur ein Tap mehr.
+<details>
+<summary><b>⚙️ Konfiguration & Dateien</b></summary>
 
----
+<br>
 
-## Die zwei Handy-Clients
-
-**A — iOS-Kurzbefehl (Diktat, kein Zertifikat nötig, läuft über HTTP):**
-Kurzbefehle-App → „Audio aufnehmen" → „Inhalte von URL abrufen" (POST,
-`http://<MAC-IP>:8765/transcribe`, Anfragetext **Formular**, Feld Typ **Datei**,
-Schlüssel `audio` = Aufgenommenes Audio). Auf „Auf-Rückseite-tippen" legen.
-
-**B — Browser (Diktat **+ Fernbedienung**, HTTPS):** `https://<MAC-IP>:8766/` öffnen,
-Zertifikatswarnung einmalig akzeptieren. Hier hast du das volle UI: Push-to-talk,
-Review-Modus, das **Fernbedienungs-Panel** und die **Status-Zeile** („→ welches
-Fenster bekommt den Text"). Der Server lauscht parallel: **HTTP 8765** (Shortcut)
-und **HTTPS 8766** (Browser).
-
----
-
-## Fernbedienung
-
-Das Browser-UI hat ein Tasten-Panel, das via `/key` und `/type` Tastendrücke an
-Claude schickt — ideal, wenn ein Agent läuft und du nicht am Schreibtisch sitzt:
-
-| Taste | Wofür |
-|---|---|
-| ↵ / ⎋ / ↑ ↓ ← | Bestätigen / Abbrechen / in Menüs navigieren |
-| 1 2 3 / y / n | Optionen wählen, ja/nein |
-| ⌃C | laufenden Agenten stoppen |
-| ⇧⇥ | Claude-Code-Modus umschalten |
-| Tab ← / → / ⌘T / ⌘1 | zwischen Terminal-Tabs springen, neuen Tab |
-| Schnell-Prompts | „weiter", „commit und push", „erklär das" … (ein Tap) |
-
-**Volle Tastatur:** `/key` versteht beliebige Kombos — `cmd`, `shift`, `ctrl`,
-`opt` + jede Taste. Beispiele: `cmd+shift+]` (nächster Tab), `cmd+t` (neuer Tab),
-`cmd+1` (Tab 1), `ctrl+c` (stop), `opt+left`. Ein Button = ein beliebiger
-Shortcut — leg dir eigene an, indem du im UI `data-key="…"` setzt.
-
-> Tippt immer ins **fokussierte** Terminal. Welches das ist, zeigt die Status-Zeile.
-> Im `tmux`-Modus gehen Tasten ans benannte Ziel (Cmd/Opt-Kombos sind dort nicht
-> sinnvoll — die laufen über den `paste`/frontmost-Weg).
-
----
-
-## Konfiguration (`.env`, siehe `.env.example`)
+`.env` (siehe `.env.example`):
 
 | Variable | Default | Bedeutung |
 |---|---|---|
 | `V2C_MODEL` | `small` | `tiny`…`large-v3` — größer = genauer, langsamer |
-| `V2C_INJECT` | `auto` | `auto`/`paste`/`tmux`/`clipboard` |
-| `V2C_TMUX` | `claude` | tmux-Ziel |
-| `V2C_APP` | fokussiert | paste: dieses Fenster vorher aktivieren |
-| `V2C_LANG` | `de` | Sprache erzwingen; leer = Auto-Erkennung |
-| `V2C_PORT` | `8765` | Port (Browser-HTTPS auf Port+1) |
+| `V2C_INJECT` | `auto` | `auto` / `paste` / `tmux` / `clipboard` |
+| `V2C_TMUX` | `claude` | tmux‑Ziel |
+| `V2C_LANG` | `de` | Sprache erzwingen; leer = Auto‑Erkennung |
+| `V2C_PORT` | `8765` | Port (Browser‑HTTPS auf Port+1) |
 | `V2C_GUARD` | `1` | nur in Terminals tippen, sonst Clipboard |
-| `V2C_SOUND` | `0` | Bestätigungston nach dem Einfügen |
-| `V2C_TOKEN` | aus | Zugriffsschutz; nötig in fremden WLANs (Fernbedienung!) |
-| `V2C_PROMPT` | dev-Jargon | bias’t die Erkennung Richtung deiner Begriffe |
+| `V2C_COOKIES` | aus | `safari`/`chrome`/… — Browser‑Cookies für login‑gesperrte Reels (`/transcribe-url`) |
+| `V2C_TOKEN` | aus | Zugriffsschutz; nötig in fremden WLANs |
+
+Dateien:
+
+| Datei | Rolle |
+|---|---|
+| `server.py` | Flask: `/transcribe` `/transcribe-url` `/type` `/key` `/status` `/health` |
+| `inject.py` | Injection‑Backends + Fernbedienung + Frontmost/Accessibility |
+| `menubar.py` | Menüleisten‑App (🎙️ Start‑Button) |
+| `static/index.html` | Handy‑UI: Push‑to‑talk, Kontrollturm, Fernsteuerung, Status |
+
+</details>
 
 ---
 
-## Dateien
+<div align="center">
 
-| Datei | Zweck |
-|---|---|
-| `server.py` | Flask: `/transcribe` `/transcribe-url` `/type` `/key` `/status` `/health` |
-| `inject.py` | Injection-Backends + Fernbedienung + Frontmost/Accessibility-Helfer |
-| `menubar.py` | 🎙️ Menüleisten-App (Auto-Start, QR, Status, Login-Item) |
-| `make_app.sh` | baut `voice2claude.app` (Doppelklick-Start-Button) |
-| `static/index.html` | Handy-UI: Push-to-talk, Review, Fernbedienung, Status |
-| `run.sh` / `voice2claude.command` | Server / Menüleiste im Terminal starten |
-| `install.command` / `setup.sh` | einmalige Einrichtung |
-| `doctor.sh` | Selbsttest: Deps, Bedienungshilfen, Ports, Netz |
+**MIT** · made for [Claude Code](https://claude.com/claude-code) · built with [faster‑whisper](https://github.com/SYSTRAN/faster-whisper) + Flask · audio stays on your Mac 🔒
 
-Diktat-Verlauf wird nach `~/.voice2claude/history.log` geschrieben.
+<sub><a href="#top">↑ back to top</a></sub>
 
-## Lizenz
-
-MIT — siehe [LICENSE](LICENSE).
+</div>
