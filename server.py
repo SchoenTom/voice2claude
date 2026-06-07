@@ -289,6 +289,69 @@ def transcribe():
     return jsonify(text=text, sent=sent, backend=backend, lang=info.language)
 
 
+@app.route("/transcribe-url", methods=["POST"])
+@require_token
+def transcribe_url():
+    """URL (Instagram-Reel / YouTube / TikTok / ...) -> Audio -> Text.
+
+    Latenz-Trick (KISS): nutzt das EINE bereits warme Whisper-Modell (kein Reload)
+    und feedet die heruntergeladene Audiospur DIREKT in faster-whisper (kein
+    mp3-Re-Encode). Damit ist nur der Download netz-gebunden, die Transkription
+    selbst ist sofort. Default = Review (Text zurueck, nicht injizieren).
+    """
+    data = request.get_json(silent=True) or request.form
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify(error="keine URL"), 400
+    req_lang = data.get("lang")
+    language = None if req_lang == "auto" else (req_lang or LANG)
+    do_send = str(data.get("send", "0")) != "0"
+    do_push = str(data.get("inject", "0")) != "0"   # default: nur Text zurueck
+
+    try:
+        import yt_dlp
+    except Exception:
+        return jsonify(error="yt-dlp fehlt — pip install yt-dlp"), 500
+
+    import glob as _glob
+    import shutil as _shutil
+    tmpdir = tempfile.mkdtemp(prefix="v2c_url_")
+    try:
+        opts = {
+            "format": "bestaudio/best",
+            "outtmpl": os.path.join(tmpdir, "a.%(ext)s"),
+            "quiet": True, "no_warnings": True,
+        }
+        cookies = os.environ.get("V2C_COOKIES")   # 'safari'/'chrome'/... fuer Login-Walls
+        if cookies:
+            opts["cookiesfrombrowser"] = (cookies,)
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            meta = ydl.extract_info(url, download=True)
+        files = _glob.glob(os.path.join(tmpdir, "a.*"))
+        if not files:
+            return jsonify(error="Download fehlgeschlagen"), 502
+        # WICHTIG: kein Re-Encode — faster-whisper dekodiert direkt via ffmpeg.
+        segments, winfo = model.transcribe(
+            files[0], language=language, vad_filter=True, initial_prompt=PROMPT
+        )
+        text = "".join(s.text for s in segments).strip()
+    except Exception as e:
+        return jsonify(error=f"{type(e).__name__}: {e}"), 500
+    finally:
+        _shutil.rmtree(tmpdir, ignore_errors=True)
+
+    title = (meta.get("title") or meta.get("uploader") or "").strip()
+    print(f"[voice2claude] url ({winfo.language}) {text!r}", flush=True)
+    if len(text) < 2:
+        return jsonify(text="", sent=False, empty=True, lang=winfo.language, title=title)
+    log_history("url", f"{url} -> {text[:80]}")
+    if not do_push:
+        return jsonify(text=text, sent=False, backend=None,
+                       lang=winfo.language, title=title, injected=False)
+    backend, sent = do_inject(text, do_send)
+    return jsonify(text=text, sent=sent, backend=backend, lang=winfo.language, title=title)
+
+
 @app.route("/type", methods=["POST"])
 @require_token
 def type_text():

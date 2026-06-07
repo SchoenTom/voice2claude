@@ -36,7 +36,9 @@ mehr eintippen**, auch wenn sich das Netz ändert.
 - 🗣 **Diktat** — sprechen → lokal transkribiert (faster-whisper) → in den Prompt. **DE / EN / Auto** umschaltbar.
 - 🏰 **Kontrollturm** — pro Session ein Status (**arbeitet / bereit / aktiv**) — sieh sofort, welcher Agent auf dich wartet.
 - 🔀 **Session-Wechsel** — alle Claude-Fenster (auch über Spaces) als Liste, antippen wechselt.
-- 🎛 **Fernbedienung** — Enter / Esc / ⌃C / Pfeile / Ziffern + App-/Fenster-Navigation vom Handy.
+- 🎛 **Fernbedienung** — Enter / Esc / ⌃C / Pfeile / Ziffern / **Tab** + App-/Fenster-Navigation vom Handy.
+- ⇥↵ **Vorschlag übernehmen** — ein Tap sendet **Tab → Enter** (Claudes vorgefertigte Prompts annehmen & absenden).
+- 🎬 **Reel / Video → Text** — Instagram-/YouTube-/TikTok-URL einfügen → Audio wird lokal transkribiert (**warmes Modell, kein Reload**) → Text landet im Transkript.
 - 🖼 **Bilder** — Foto/Screenshot vom Handy → erscheint inline in Claudes Prompt.
 - ▶️ **Start-Button** — Menüleisten-App (🎙️), kein Terminal-Befehl nötig.
 - 🛡 **Safety-Guard** — tippt nur in Terminals; sonst nur Zwischenablage.
@@ -154,7 +156,7 @@ Shortcut — leg dir eigene an, indem du im UI `data-key="…"` setzt.
 
 | Datei | Zweck |
 |---|---|
-| `server.py` | Flask: `/transcribe` `/type` `/key` `/status` `/health` |
+| `server.py` | Flask: `/transcribe` `/transcribe-url` `/type` `/key` `/status` `/health` |
 | `inject.py` | Injection-Backends + Fernbedienung + Frontmost/Accessibility-Helfer |
 | `menubar.py` | 🎙️ Menüleisten-App (Auto-Start, QR, Status, Login-Item) |
 | `make_app.sh` | baut `voice2claude.app` (Doppelklick-Start-Button) |

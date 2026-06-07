@@ -175,6 +175,13 @@ body::after{ content:''; position:fixed; inset:0; z-index:0; pointer-events:none
 .keypad-row{ display:grid; gap:8px; }
 .keypad-row-4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
 .keypad-row-3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+.keypad-row-2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+.key-tab{ background:rgba(0,198,255,0.07); border-color:rgba(0,198,255,0.25); }
+.key-accept{ background:linear-gradient(135deg,rgba(16,217,142,0.18),rgba(0,198,255,0.12)); border-color:rgba(16,217,142,0.4); font-weight:600; }
+.urltx-row{ display:flex; gap:8px; }
+.urltx-input{ flex:1; min-width:0; min-height:46px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); background:rgba(255,255,255,0.05); color:var(--text-primary); padding:0 12px; font-size:14px; -webkit-appearance:none; }
+.urltx-input::placeholder{ color:var(--text-faint,#4a6080); }
+.urltx-hint{ margin-top:8px; font-size:12px; color:var(--text-faint,#8ba4c8); line-height:1.4; }
 .key{ display:flex; align-items:center; justify-content:center; min-height:46px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.05); color:var(--text-primary); letter-spacing:.01em; transition:background .12s, transform .1s, box-shadow .12s; -webkit-appearance:none; position:relative; overflow:hidden; padding:0 6px; text-align:center; line-height:1.2; }
 .key::after{ content:''; position:absolute; inset:0; border-radius:inherit; background:linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, transparent 60%); pointer-events:none; }
 .key:active{ transform:scale(0.93); background:rgba(255,255,255,0.1); }
@@ -271,6 +278,17 @@ body::after{ content:''; position:fixed; inset:0; z-index:0; pointer-events:none
     </div>
   </div>
 
+  <div class="section-label"><span>Reel / Video → Text</span></div>
+  <div class="urltx-zone">
+    <div class="transcript-card">
+      <div class="urltx-row">
+        <input class="urltx-input" id="urlin" type="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="Instagram-Reel / YouTube / TikTok URL …">
+        <button class="btn-send" id="urlbtn">→ Text</button>
+      </div>
+      <div class="urltx-hint" id="urlhint">Lädt die Audiospur, transkribiert lokal (warmes Modell) → Text landet oben im Transkript.</div>
+    </div>
+  </div>
+
   <div class="section-label"><span id="sesshead">Sessions</span><span class="refresh" id="refresh">aktualisieren</span></div>
   <div class="sessions-zone"><div class="sessions-card" id="sessions"><div class="sessions-empty">lade…</div></div></div>
 
@@ -293,6 +311,10 @@ body::after{ content:''; position:fixed; inset:0; z-index:0; pointer-events:none
         <button class="key" data-key="1">1</button>
         <button class="key" data-key="2">2</button>
         <button class="key" data-key="3">3</button>
+      </div>
+      <div class="keypad-row keypad-row-2">
+        <button class="key key-tab" data-key="tab">Tab ⇥</button>
+        <button class="key key-accept" data-combo="tab,enter">Vorschlag ⇥↵</button>
       </div>
     </div>
   </div>
@@ -489,6 +511,36 @@ document.querySelectorAll('[data-key]').forEach(b=>{
 document.querySelectorAll('[data-act]').forEach(b=>{
   b.addEventListener('click', ()=>{ flashEl(b); cycleWindow(b.dataset.act); });
 });
+/* Combo: mehrere Tasten nacheinander (z.B. Tab dann Enter = Vorschlag übernehmen).
+   Kurze Pause dazwischen, damit die TUI den Tab-Vorschlag übernimmt, bevor Enter sendet. */
+document.querySelectorAll('[data-combo]').forEach(b=>{
+  b.addEventListener('click', async ()=>{
+    flashEl(b);
+    try{
+      for(const k of b.dataset.combo.split(',')){
+        const j=await (await api('/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k.trim()})})).json();
+        if(!j.sent){ toast(j.error||'kein Terminal vorne', true); return; }
+        await new Promise(r=>setTimeout(r,90));
+      }
+      toast('✓ übernommen & gesendet');
+    }catch(e){ toast('Fehler: '+e.message, true); }
+  });
+});
+/* Reel / Video URL -> Text (warmer Server-Endpunkt, kein Modell-Reload). */
+$('#urlbtn').onclick=async ()=>{
+  const inp=$('#urlin'), hint=$('#urlhint');
+  const u=(inp.value||'').trim();
+  if(!u){ toast('keine URL'); return; }
+  const old=hint.textContent; hint.textContent='⬇️ lade & transkribiere …';
+  try{
+    const j=await (await api('/transcribe-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u,lang:currentLang})})).json();
+    if(j.error){ toast(j.error, true); }
+    else if(j.empty){ toast('nichts gehört', true); }
+    else { ta.value = ta.value.trim() ? (ta.value.trim()+'\n\n'+j.text) : j.text;
+           toast('✓ transkribiert'+(j.title?' — '+j.title:'')); inp.value=''; }
+  }catch(e){ toast('Fehler: '+e.message, true); }
+  finally{ hint.textContent=old; }
+};
 $('#refresh').onclick=loadSessions;
 
 /* ---- Sprache (DE/EN/Auto) ---- */

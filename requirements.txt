@@ -2,3 +2,4 @@ flask>=3.0
 faster-whisper>=1.0
 rumps>=0.4          # Menüleisten-App (Start-Button)
 qrcode>=7.0         # QR-Code der iPhone-URL im Terminal
+yt-dlp>=2025.1      # Reel/Video → Text (/transcribe-url): Audio-Download
